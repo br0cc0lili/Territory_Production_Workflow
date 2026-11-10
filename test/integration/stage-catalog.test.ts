@@ -26,6 +26,7 @@ describe('prepare-stage-catalog', () => {
     const outDir = mkdtempSync(join(tmpdir(), 'stage-catalog-'))
     const r = prepareStageCatalog({ namespace: '44531-798fuchsiatarsier-stage', outDir, only: 'color-detection' })
     expect(r.map((x: any) => x.actionType)).toEqual(['territory-color-detection-stage'])
+    expect(JSON.parse(readFileSync(r[0].file, 'utf8')).relatedActions).toEqual(['input-images'])
     expect(() => prepareStageCatalog({ namespace: '44531-798fuchsiatarsier-stage', outDir, only: 'nope' })).toThrow(/no catalog entry/)
   })
   it('rejects a malformed namespace', () => {
