@@ -22,6 +22,9 @@ application:
             runtime: nodejs:22
             annotations:
               require-adobe-auth: false
+            inputs:
+              # comma-separated caller client ids; empty = run-workflow-service only
+              ALLOWED_CALLER_CLIENT_IDS: $ALLOWED_CALLER_CLIENT_IDS
           color-detection-worker:
             function: actions/color-detection/color-detection.worker.ts
             runtime: nodejs:22
@@ -37,6 +40,9 @@ application:
             runtime: nodejs:22
             annotations:
               require-adobe-auth: false
+            inputs:
+              # comma-separated caller client ids; empty = run-workflow-service only
+              ALLOWED_CALLER_CLIENT_IDS: $ALLOWED_CALLER_CLIENT_IDS
           image-extension-worker:
             function: actions/image-extension/image-extension.worker.ts
             runtime: nodejs:22

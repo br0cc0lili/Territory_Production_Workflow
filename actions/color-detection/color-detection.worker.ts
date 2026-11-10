@@ -41,6 +41,8 @@ const isKnown = (e: unknown) => Boolean(e && (e as { expose?: boolean }).expose)
 export function createColorDetectionHandler(deps: ColorDetectionDeps = {}): FfcpeNodeWorkerHandler {
   return async ({ inputs, params: workflowParams, logger }) => {
     try {
+      const multi = [PORTS.background, PORTS.textLayout, PORTS.palette].find((port) => inputs.filter((i) => i.port === port).length > 1)
+      if (multi) return { status: 'failed', error: `Port "${multi}" received ${inputs.filter((i) => i.port === multi).length} items; Color Detection takes one per job (one layout per job)` }
       const backgroundUrl = getImageInput(inputs, PORTS.background)
       if (!backgroundUrl) return { status: 'failed', error: `Missing image on port "${PORTS.background}"` }
       const layout = getJsonInput(inputs, PORTS.textLayout)

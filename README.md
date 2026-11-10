@@ -36,6 +36,7 @@ npm install
 npm test                 # offline unit + SDK round-trip tests (vitest)
 npm run typecheck
 npm run validate:catalog # Adobe's catalog-entry rules on actions/*/*.entry.json
+npm run catalog:stage -- --namespace <ns>  # Stage catalog entries after deploy
 ```
 
 The SDK declares `node >= 22`; App Builder runs the actions on `nodejs:22`.
@@ -43,5 +44,5 @@ The SDK declares `node >= 22`; App Builder runs the actions on `nodejs:22`.
 ## Status
 
 Local only — **not deployed, not registered, not pushed**. See
-[docs/integration.md](docs/integration.md) for what deployment and
-registration need.
+[docs/integration.md](docs/integration.md) and the Stage runbook
+[docs/stage-deployment.md](docs/stage-deployment.md).

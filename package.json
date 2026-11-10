@@ -9,6 +9,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "validate:catalog": "node scripts/validate-entries.mjs",
+    "catalog:stage": "node scripts/prepare-stage-catalog.mjs",
     "check": "npm run typecheck && npm test && npm run validate:catalog"
   },
   "dependencies": {

@@ -53,6 +53,8 @@ export function createImageExtensionHandler(deps: ImageExtensionDeps = {}): Ffcp
   const store = deps.store ?? assets.createFilesStore()
   return async ({ jobId, inputs, params, args, logger }) => {
     try {
+      const multi = [PORTS.source, PORTS.layout, PORTS.prompt].find((port) => inputs.filter((i) => i.port === port).length > 1)
+      if (multi) return { status: 'failed', error: `Port "${multi}" received ${inputs.filter((i) => i.port === multi).length} items; Image Extension takes one source image per job` }
       const sourceUrl = getImageInput(inputs, PORTS.source)
       if (!sourceUrl) return { status: 'failed', error: `Missing image on port "${PORTS.source}"` }
       const layout = getJsonInput(inputs, PORTS.layout)

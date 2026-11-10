@@ -35,10 +35,15 @@ inside the SDK routes instead of the App Builder gateway.
 
 ## Ports and connections
 
-In a workflow, `connections[]` wire `sourcePort` → `targetPort`; these must
-equal the catalog `outputs[].name` / `inputs[].name`. A port may carry more
-than one item (e.g. `input-images` → "one or more images"); the SDK passes the
-`outputs[]` array through unchanged, several items may share one port.
+In a workflow definition (`actions[]` with `actionId` / `actionType` /
+`parameters`, `connections[]` with `connectionSource` / `sourcePort` →
+`connectionTarget` / `targetPort` — Workflow API spec), ports must equal the
+catalog `outputs[].name` / `inputs[].name`. A port may carry more than one
+item; the SDK passes `outputs[]` through unchanged. Whether a downstream node
+then runs once per item or once with the list is not documented publicly —
+see [stage-deployment.md](stage-deployment.md#multiple-image-outputs--what-is-known).
+Single-item ports (Color Detection `background`, Image Extension `source`)
+reject lists explicitly.
 
 ## Security
 
@@ -50,8 +55,15 @@ than one item (e.g. `input-images` → "one or more images"); the SDK passes the
   workspace OAuth Server-to-Server credential injected by App Builder
   (`include-ims-credentials`), never from inputs.
 - The InDesign plugin's `x-plugin-key` gate is **not** used here.
+- **Caller allow-list** (`actions/shared/caller-guard.ts`): the SDK's IMS
+  check alone accepts any valid IMS token whose client id equals the
+  `x-api-key` header. The web actions additionally accept only
+  `run-workflow-service` (Workflow Builder), configurable per deployment via
+  the action input `ALLOWED_CALLER_CLIENT_IDS`.
 
 ## Deploy + register (not done yet)
+
+Full runbook: [stage-deployment.md](stage-deployment.md). Summary:
 
 1. Adobe Developer Console: a **new** project for these nodes (alphanumeric,
    ≤ 20 chars), Stage workspace. Image Extension also needs **Firefly
