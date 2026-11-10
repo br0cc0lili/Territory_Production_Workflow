@@ -13,7 +13,9 @@
 const DEFAULT_MAX_BYTES = 80 * 1024 * 1024; // 80 MB per input asset
 const DEFAULT_TIMEOUT_MS = 60000;
 
-class AssetError extends Error {}
+class AssetError extends Error {
+    constructor(message) { super(message); this.name = "AssetError"; this.expose = true; }
+}
 
 function assertHttpsUrl(url, what) {
     let u;

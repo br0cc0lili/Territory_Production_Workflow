@@ -14,4 +14,18 @@ application:
     packages:
       territory-ffcpe-nodes:
         license: UNLICENSED
-        actions: {}
+        actions:
+          color-detection-web:
+            function: actions/color-detection/color-detection.web.ts
+            web: "raw"
+            runtime: nodejs:22
+            annotations:
+              require-adobe-auth: false
+          color-detection-worker:
+            function: actions/color-detection/color-detection.worker.ts
+            runtime: nodejs:22
+            limits:
+              memorySize: 1024
+              timeout: 120000
+            inputs:
+              LOG_LEVEL: info
