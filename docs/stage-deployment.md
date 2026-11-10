@@ -75,14 +75,40 @@ Every step marked 🔑 needs Adobe credentials or permissions.
 8. Clean-up options: `aio ffcpe catalog disable <type>` hides an entry;
    `delete` removes it.
 
+## Findings from the first Stage deployment (Color Detection, 2026-11-10)
+
+Project **Territory Production Workflow** (`798FuchsiaTarsier`), Stage,
+namespace `44531-798fuchsiatarsier-stage`, deployed from branch
+`stage/color-detection` (manifest = Color Detection only). Details and the
+Workflow Builder test: `test/stage/color-detection/README.md` on that branch.
+
+1. **statusUrl** — the SDK built it from Runtime's internal controller host
+   (not reachable outside Adobe). Fixed: `actions/shared/public-status-url.ts`
+   rewrites it to the public web-action URL (= catalog `statusEndpoint`).
+2. **Catalog access** — `aio ffcpe catalog list` (read-only) is refused for
+   the account logged in to `aio`: "Caller is not associated with an Adobe
+   org; Firefly Services requires an entitled enterprise org", also with
+   `--org-id`. Registration needs an account that is a member of the
+   Territory org **with Firefly Creative Production entitlement** — to be
+   confirmed / granted by the org admin. Naming conflicts can only be
+   checked then (`aio ffcpe catalog inspect territory-color-detection-stage`
+   → 404 means free).
+3. **App Builder Files from outside Runtime** — local uploads to the
+   workspace's file storage are refused (ERROR_BAD_CREDENTIALS); inside
+   Runtime (Image Extension's worker) it is the normal path.
+4. **aio context** — use the deploy checkout's local `.aio` (`aio app use
+   <workspace json>`); the global `aio` selection can stay on another project.
+5. Runtime shows `app error` for status polls of failed jobs: the SDK answers
+   HTTP 500 for `failed` (documented contract), not a fault.
+
 ## Open points to test on Stage (cannot be verified offline)
 
 1. **JSON inputs from the canvas**: Workflow Builder's input nodes are Input
    Image / Text / Video; there is no documented "Input JSON". The SDK reads a
-   `json` port also from a **text** item containing JSON (`getJsonInput`),
-   and our tests cover that — check whether run-workflow lets an Input Text
-   node connect to a `json`-typed port. If not, the ports' catalog `type`
-   would need to become `text` (code unchanged).
+   `json` port also from a **text** item containing JSON (`getJsonInput`) —
+   verified on Stage — but whether the canvas lets an Input Text node
+   connect to a `json`-typed port is still open. If not, the ports' catalog
+   `type` would need to become `text` (code unchanged).
 2. **Multiple image outputs** — see below.
 3. **IMS service token**: that run-workflow's calls pass the SDK's IMS check
    and the caller guard (`x-api-key: run-workflow-service`). If Stage shows
