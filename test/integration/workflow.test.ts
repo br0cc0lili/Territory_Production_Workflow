@@ -126,3 +126,29 @@ describe('caller guard (web actions)', () => {
     expect((await call('run-workflow-service')).status).toBe(200)
   })
 })
+
+describe('public statusUrl (web actions)', () => {
+  it('rewrites the SDK statusUrl (Runtime-internal host) to the public web-action URL = catalog statusEndpoint', async () => {
+    const { usePublicStatusUrl } = await import('../../actions/shared/public-status-url')
+    const saved = { ns: process.env.__OW_NAMESPACE, host: process.env.__OW_API_HOST }
+    process.env.__OW_NAMESPACE = '44531-798fuchsiatarsier-stage'
+    process.env.__OW_API_HOST = 'https://controller-gw-ns.int.example.adobe.net'
+    try {
+      const echo = async () => ({ status: 'completed' as const, outputs: [] })
+      const r = await runThroughSdk({
+        handler: echo, submit: { inputs: [], parameters: {} },
+        beforeMount: (app) => { restrictCallers(app); usePublicStatusUrl(app, { packageName: 'territory-ffcpe-nodes', actionName: 'color-detection-web' }) },
+      })
+      expect(r.submitRes.status).toBe(202)
+      expect(r.submitBody.statusUrl).toBe(`https://44531-798fuchsiatarsier-stage.adobeioruntime.net/api/v1/web/territory-ffcpe-nodes/color-detection-web/status?jobId=${r.submitBody.jobId}`)
+      expect(r.status!.status).toBe('completed') // polling the rewritten URL's query still finds the job
+      const rejected = await runThroughSdk({ handler: echo, submit: { inputs: [], parameters: {} }, apiKey: 'other', beforeMount: (app) => { restrictCallers(app); usePublicStatusUrl(app, { packageName: 'p', actionName: 'a' }) } })
+      expect(rejected.submitRes.status).toBe(403) // non-202 responses untouched
+    } finally {
+      process.env.__OW_NAMESPACE = saved.ns
+      process.env.__OW_API_HOST = saved.host
+      if (saved.ns === undefined) delete process.env.__OW_NAMESPACE
+      if (saved.host === undefined) delete process.env.__OW_API_HOST
+    }
+  })
+})
