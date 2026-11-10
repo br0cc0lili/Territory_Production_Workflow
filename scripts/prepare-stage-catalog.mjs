@@ -47,6 +47,10 @@ export function prepareStageCatalog({ namespace, root = 'actions', outDir = 'bui
   mkdirSync(outDir, { recursive: true })
   return sources.map(({ path, entry }) => {
     const out = stageEntry(entry, { namespace, suffix, ownTypes })
+    // a single-node deployment must not point at our other node's (unregistered) Stage type
+    const generated = new Set(sources.map((x) => x.entry.actionType + suffix))
+    const kept = out.relatedActions.filter((t) => !ownTypes.some((o) => o + suffix === t) || generated.has(t))
+    out.relatedActions = kept.length ? kept : ['input-images']
     const errors = validateCatalogEntry(out)
     const file = join(outDir, `${out.actionType}.entry.json`)
     writeFileSync(file, JSON.stringify(out, null, 2) + '\n')
