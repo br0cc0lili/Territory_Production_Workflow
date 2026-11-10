@@ -14,4 +14,22 @@ application:
     packages:
       territory-ffcpe-nodes:
         license: UNLICENSED
-        actions: {}
+        actions:
+          image-extension-web:
+            function: actions/image-extension/image-extension.web.ts
+            web: "raw"
+            runtime: nodejs:22
+            annotations:
+              require-adobe-auth: false
+          image-extension-worker:
+            function: actions/image-extension/image-extension.worker.ts
+            runtime: nodejs:22
+            limits:
+              memorySize: 2048
+              timeout: 600000
+            annotations:
+              # injects the workspace OAuth Server-to-Server credential (Firefly Services)
+              # as __ims_oauth_s2s — read only by src/core/firefly-auth.js
+              include-ims-credentials: true
+            inputs:
+              LOG_LEVEL: info

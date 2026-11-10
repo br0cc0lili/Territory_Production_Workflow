@@ -1,0 +1,104 @@
+{
+  "actionType": "territory-image-extension",
+  "version": "1.0.0",
+  "name": "Territory Image Extension",
+  "description": "Extends a source image with Firefly Generative Expand so it fills each target layout canvas, from the final image placement per layout. Targets share one master generation where possible; the original pixels are kept unchanged.",
+  "category": "custom",
+  "disabled": false,
+  "workflowEnabled": true,
+  "aliases": ["layout-image-extension", "batch-generative-expand"],
+  "tags": ["image", "firefly", "generative-expand", "outpainting", "layout", "custom"],
+
+  "inputs": [
+    {
+      "name": "source",
+      "type": "image",
+      "required": true,
+      "mimeTypes": ["image/jpeg", "image/png"],
+      "description": "The original image, as placed by the upstream layout / subject placement step"
+    },
+    {
+      "name": "layout",
+      "type": "json",
+      "required": true,
+      "mimeTypes": ["application/json"],
+      "description": "Targets: { targets: [{ id, canvas: { width, height }, placement: { x, y, width, height } }] } — canvas pixels; placement = where the whole source lies on the canvas"
+    },
+    {
+      "name": "prompt",
+      "type": "text",
+      "required": false,
+      "mimeTypes": ["text/plain"],
+      "description": "Optional Firefly prompt for the generated areas (max 1024 characters)"
+    }
+  ],
+
+  "outputs": [
+    {
+      "name": "extendedImages",
+      "type": "image",
+      "mimeTypes": ["image/png"],
+      "description": "One PNG per target at its canvas size, named <target id>.png (targets that need review or failed have no image)"
+    },
+    {
+      "name": "extensionMetadata",
+      "type": "json",
+      "mimeTypes": ["application/json"],
+      "description": "Per target: status (extended | not_required | needs_review | failed), missing sides, extension ratio, original region, master id, Firefly job id, warnings; plus the master generations"
+    }
+  ],
+
+  "parameters": [
+    {
+      "name": "batchMode",
+      "type": "string",
+      "required": false,
+      "defaultValue": "shared",
+      "description": "shared: as few master generations as possible (consistent content across layouts); independent: one generation per target"
+    },
+    {
+      "name": "maxExtensionRatio",
+      "type": "number",
+      "required": false,
+      "defaultValue": 0.5,
+      "description": "Automatic limit: Firefly may generate at most this share of the source per axis; larger targets need review"
+    },
+    {
+      "name": "allowLarge",
+      "type": "boolean",
+      "required": false,
+      "defaultValue": false,
+      "description": "Generate targets over the extension / resolution limit anyway (after a human decision)"
+    },
+    {
+      "name": "coverageTolerancePx",
+      "type": "number",
+      "required": false,
+      "defaultValue": 2,
+      "description": "Gaps up to this many canvas pixels per side are filled from the original edge instead of Firefly"
+    }
+  ],
+
+  "relatedActions": ["input-images", "territory-color-detection"],
+  "usage": {
+    "commonPatterns": [
+      "Run after subject placement, once each layout's final image placement is known, to fill the uncovered canvas areas",
+      "Run before text colour detection, so colours are judged on the extended image"
+    ],
+    "bestPractices": [
+      "Send all layouts of one image in one job: they then share one Firefly master generation and match each other",
+      "Keep placements at or below the source resolution; a placement that upscales the source can exceed the resolution limit",
+      "Route targets with status needs_review to a human; rerun with allowLarge only after approval"
+    ]
+  },
+
+  "handlerType": "custom-action",
+  "customActionConfig": {
+    "submitEndpoint": "https://NAMESPACE.adobeioruntime.net/api/v1/web/territory-ffcpe-nodes/image-extension-web/submit",
+    "statusEndpoint": "https://NAMESPACE.adobeioruntime.net/api/v1/web/territory-ffcpe-nodes/image-extension-web/status",
+    "pollIntervalMs": 3000,
+    "maxPollAttempts": 200,
+    "timeoutMs": 600000,
+    "authentication": { "type": "ims_service_token" }
+  }
+}
