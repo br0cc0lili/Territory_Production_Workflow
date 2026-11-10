@@ -22,9 +22,9 @@ const configFile = resolve(arg('--config', join(HERE, 'test-data/config.marderab
 const background = arg('--background', '')
 const localOut = arg('--out', '')
 
-async function bundle(extraFooter = '', embedded = null) {
+async function bundle(extraFooter = '', embedded = null, entry = 'src/entry.js') {
   const r = await build({
-    entryPoints: [join(HERE, 'src/entry.js')],
+    entryPoints: [join(HERE, entry)],
     bundle: true,
     write: false,
     format: 'iife',
@@ -92,6 +92,54 @@ export async function buildAll() {
     outputs: [{ mediaType: 'application/json', destination: { validityPeriod: 3600 }, scriptOutputPattern: 'color-decision.json' }],
   }
   writeFileSync(join(DIST, 'execute-actions.request.json'), JSON.stringify(request, null, 2) + '\n')
+
+  // --- "Photoshop action V2" node probe ---
+  const probe = 'src/node-probe.js'
+  writeFileSync(join(DIST, 'node-probe.psjs'), await bundle(run, null, probe))
+  writeFileSync(join(DIST, 'node-probe.embedded.psjs'), await bundle(run, config, probe))
+  const probeDir = arg('--probe-dir', '')
+  if (background && probeDir) {
+    // simulate the node: the platform replaces __ADDITIONAL_CONTENTS_PATH_0__ with the Assets file
+    const configPng = join(probeDir, 'config.png')
+    const saveAs = {
+      png: { _obj: 'PNGFormat', method: { _enum: 'PNGMethod', _value: 'quick' } },
+      jpg: { _obj: 'JPEG', extendedQuality: 10, matteColor: { _enum: 'matteColor', _value: 'none' } },
+      psd: { _obj: 'photoshop35Format', maximizeCompatibility: true },
+      tif: { _obj: 'TIFF', byteOrder: { _enum: 'platform', _value: 'IBMPC' } },
+    }
+    const harness = `
+(async function probeHarness() {
+  const ps = require('photoshop'); const uxp = require('uxp'); const lfs = uxp.storage.localFileSystem;
+  const folder = await lfs.getEntryWithUrl(${JSON.stringify('file:' + probeDir)});
+  async function writeText(name, text) { const f = await folder.createFile(name, { overwrite: true }); await f.write(text); }
+  const saveAs = ${JSON.stringify(saveAs)};
+  try {
+    await ps.core.executeAsModal(async () => {
+      const doc = await ps.app.open(await lfs.getEntryWithUrl(${JSON.stringify('file:' + background)}));
+      try {
+        const report = await __colorDetection.run();
+        await writeText('probe-report.json', JSON.stringify(report, null, 2));
+        const saved = {};
+        for (const ext of Object.keys(saveAs)) {
+          try {
+            const f = await folder.createFile('processed.' + ext, { overwrite: true });
+            await ps.app.batchPlay([{ _obj: 'save', as: saveAs[ext], in: { _path: lfs.createSessionToken(f), _kind: 'local' }, documentID: doc.id, copy: true, lowerCase: true }], { modalBehavior: 'execute' });
+            saved[ext] = 'ok';
+          } catch (e) { saved[ext] = String(e && e.message || e); }
+        }
+        await writeText('saved.json', JSON.stringify(saved));
+      } finally {
+        await doc.closeWithoutSaving();   // only the document this harness opened
+      }
+    }, { commandName: 'Territory Color Detection probe' });
+  } catch (e) {
+    try { await writeText('probe-report.json', JSON.stringify({ harnessError: String(e && e.message || e) })); } catch (e2) {}
+  }
+})();
+`
+    const code = (await bundle(harness, null, probe)).split('__ADDITIONAL_CONTENTS_PATH_0__').join(configPng)
+    writeFileSync(join(DIST, 'node-probe.local-test.psjs'), code)
+  }
   return { scriptBytes: Buffer.byteLength(script) }
 }
 
