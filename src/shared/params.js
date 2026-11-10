@@ -2,7 +2,12 @@
 // Each reader returns the value or throws NodeInputError with a message that
 // names the field (safe to return to Workflow Builder as the job error).
 
-class NodeInputError extends Error {}
+// expose: the message is safe to return to Workflow Builder as the job error.
+// (Checked by flag, not instanceof — bundlers / test runners may load this
+// module more than once.)
+class NodeInputError extends Error {
+    constructor(message) { super(message); this.name = "NodeInputError"; this.expose = true; }
+}
 
 const isObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 

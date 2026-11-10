@@ -1,0 +1,41 @@
+{
+  "_comment": "Mock FFCPE submit body for Color Detection — stands in for the upstream Data Merge / Subject Placement / render steps until they exist. Page 1080 x 1080 pt; the background URL is served by the test's mock fetch (synthetic 540 x 540 px render: dark upper half with a bright patch under the end of headline line 1, bright lower half).",
+  "inputs": [
+    {
+      "port": "background",
+      "type": "image",
+      "name": "marderabwehr_1080x1080_background.png",
+      "mimeType": "image/png",
+      "url": "https://assets.test.invalid/marderabwehr_1080x1080_background.png"
+    },
+    {
+      "port": "textLayout",
+      "type": "json",
+      "name": "text-layout.json",
+      "mimeType": "application/json",
+      "json": {
+        "coordinateSpace": { "unit": "pt", "pageBounds": [0, 0, 1080, 1080] },
+        "roles": [
+          { "role": "headline", "fontSizePt": 87, "lines": [[80, 60, 170, 700], [175, 60, 265, 560]] },
+          { "role": "subline", "fontSizePt": 37, "lines": [[900, 60, 945, 620]] }
+        ]
+      }
+    },
+    {
+      "port": "palette",
+      "type": "json",
+      "name": "palette.json",
+      "mimeType": "application/json",
+      "json": {
+        "swatches": [
+          { "id": "Audi/White RGB", "name": "White RGB", "model": "RGB", "values": [1, 1, 1] },
+          { "id": "Audi/Audi Black RGB", "name": "Audi Black RGB", "model": "RGB", "values": [0, 0, 0] },
+          { "id": "Audi/Audi Red", "name": "Audi Red", "rgb": [187, 10, 48] },
+          { "id": "Audi/Silver", "name": "Silver", "hex": "#b3b3b3" }
+        ],
+        "selectedIds": ["Audi/White RGB", "Audi/Audi Black RGB", "Audi/Audi Red"]
+      }
+    }
+  ],
+  "parameters": {}
+}

@@ -8,7 +8,7 @@ on Adobe App Builder.
 
 | Node | Branch | Purpose |
 |---|---|---|
-| Color Detection | `feature/color-detection` | Picks the most readable approved palette colour per text role (Headline / Subline) from a background-only render; flags LOW contrast for review. No Adobe API call. |
+| Color Detection ([docs](docs/color-detection.md)) | `feature/color-detection` | Picks the most readable approved palette colour per text role (Headline / Subline) from a background-only render; flags LOW contrast for review. No Adobe API call. |
 | Image Extension | `feature/image-extension` | Extends a source image to fill target layout canvases with Firefly Generative Expand, one shared master generation per job where possible, original pixels preserved. |
 
 The processing logic is reused from the Territory InDesign plugin and the

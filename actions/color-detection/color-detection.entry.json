@@ -1,0 +1,97 @@
+{
+  "actionType": "territory-color-detection",
+  "version": "1.0.0",
+  "name": "Territory Text Color Detection",
+  "description": "Chooses the most readable approved palette colour for each text role (e.g. Headline, Subline) on a background-only render, using weakest-zone WCAG contrast scoring, and flags low contrast for review.",
+  "category": "custom",
+  "disabled": false,
+  "workflowEnabled": true,
+  "aliases": ["text-color-detection", "auto-text-color"],
+  "tags": ["color", "contrast", "accessibility", "text", "layout", "custom"],
+
+  "inputs": [
+    {
+      "name": "background",
+      "type": "image",
+      "required": true,
+      "mimeTypes": ["image/png", "image/jpeg", "image/webp"],
+      "description": "Final layout rendered WITHOUT the text being coloured (Headline/Subline hidden) — the pixels the text will sit on"
+    },
+    {
+      "name": "textLayout",
+      "type": "json",
+      "required": true,
+      "mimeTypes": ["application/json"],
+      "description": "Text roles with glyph line boxes: { coordinateSpace, roles: [{ role, fontSizePt, lines: [[top,left,bottom,right], …] }] }"
+    },
+    {
+      "name": "palette",
+      "type": "json",
+      "required": true,
+      "mimeTypes": ["application/json"],
+      "description": "Approved client colours: { swatches: [{ id, name, model, values | rgb | hex }], selectedIds? } or { aseUrl, selectedIds? }"
+    }
+  ],
+
+  "outputs": [
+    {
+      "name": "colorDecision",
+      "type": "json",
+      "mimeTypes": ["application/json"],
+      "description": "Per text role: selected colour, weakest-zone and overall contrast, threshold, readability OK / LOW / NO_DATA, ranking and warnings; overall status ok | review"
+    },
+    {
+      "name": "readability",
+      "type": "text",
+      "mimeTypes": ["text/plain"],
+      "description": "\"ok\" when every role meets its contrast threshold, otherwise \"review\""
+    }
+  ],
+
+  "parameters": [
+    {
+      "name": "largeTextThreshold",
+      "type": "number",
+      "required": false,
+      "defaultValue": 3,
+      "description": "Minimum contrast for large text (WCAG 2: 3:1)"
+    },
+    {
+      "name": "normalTextThreshold",
+      "type": "number",
+      "required": false,
+      "defaultValue": 4.5,
+      "description": "Minimum contrast for normal-size text (WCAG 2: 4.5:1)"
+    },
+    {
+      "name": "largeTextFromPt",
+      "type": "number",
+      "required": false,
+      "defaultValue": 18,
+      "description": "Text at or above this size (pt) counts as large text"
+    }
+  ],
+
+  "relatedActions": ["input-images", "territory-image-extension"],
+  "usage": {
+    "commonPatterns": [
+      "Run after the layout is composed and the image is extended, before applying text colours to the final layouts",
+      "Route layouts whose readability is \"review\" to a human approval step"
+    ],
+    "bestPractices": [
+      "Send a background-only render: hide the text being coloured, keep everything else (image, extension, overlays)",
+      "Send one box per glyph line rather than the whole text frame, so empty frame areas don't affect the score",
+      "Only pass the client's approved colours; the node never picks a colour outside the palette"
+    ]
+  },
+
+  "handlerType": "custom-action",
+  "customActionConfig": {
+    "submitEndpoint": "https://NAMESPACE.adobeioruntime.net/api/v1/web/territory-ffcpe-nodes/color-detection-web/submit",
+    "statusEndpoint": "https://NAMESPACE.adobeioruntime.net/api/v1/web/territory-ffcpe-nodes/color-detection-web/status",
+    "pollIntervalMs": 2000,
+    "maxPollAttempts": 90,
+    "timeoutMs": 180000,
+    "authentication": { "type": "ims_service_token" }
+  }
+}
