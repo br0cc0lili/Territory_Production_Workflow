@@ -1,0 +1,24 @@
+# dependencies / build
+node_modules/
+dist/
+coverage/
+.parcel-cache/
+
+# App Builder local config and credentials — never commit
+.env
+.env.*
+.aio
+# Adobe Developer Console workspace downloads (contain client secrets)
+[0-9]*-*-*.json
+*-Stage.json
+*-Production.json
+console.json
+
+# local test output
+test-output/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+*.log

@@ -1,0 +1,36 @@
+{
+  "name": "territory-production-workflow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Territory custom nodes for Adobe Firefly Creative Production for Enterprise (FFCPE) Workflow Builder, built on Adobe's FFCPE Custom Node SDK and App Builder.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "validate:catalog": "node scripts/validate-entries.mjs",
+    "check": "npm run typecheck && npm test && npm run validate:catalog"
+  },
+  "dependencies": {
+    "@adobe/aio-lib-core-logging": "^3",
+    "@adobe/aio-lib-files": "^4",
+    "@adobe/aio-lib-ims": "^7",
+    "@adobe/aio-lib-state": "^5",
+    "@adobe/ffcpe-custom-node-app-builder": "1.0.0",
+    "@adobe/ffcpe-custom-node-core": "1.0.0",
+    "hono": "^4",
+    "hono-openwhisk-adapter": "^2.1.1",
+    "jimp": "^1.6.0",
+    "openwhisk": "^3.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "esbuild-loader": "^4.2.2",
+    "semver": "^7.7.2",
+    "typescript": "^5.5.4",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

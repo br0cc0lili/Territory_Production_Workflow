@@ -1,0 +1,17 @@
+# Adobe App Builder app: Territory FFCPE custom nodes.
+#
+# Each custom node is a web + worker action pair (Adobe FFCPE Custom Node SDK):
+#   <node>-web     web: "raw", require-adobe-auth: false — POST /submit, GET /status
+#                  (IMS inbound auth is done by mountFfcpeNodeRoutes itself)
+#   <node>-worker  runs the node handler asynchronously
+# Node pairs are added on their feature branches (feature/color-detection,
+# feature/image-extension).
+#
+# Not wired to an Adobe Developer Console workspace yet — nothing is deployed.
+application:
+  actions: actions
+  runtimeManifest:
+    packages:
+      territory-ffcpe-nodes:
+        license: UNLICENSED
+        actions: {}
