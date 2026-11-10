@@ -4,6 +4,8 @@
 //
 //   node scripts/prepare-stage-catalog.mjs --namespace <runtime-namespace>
 //   e.g. --namespace 1234567-territoryffcpe-stage   (from `aio app deploy` output)
+//   --only <node>   only this node's entry (folder name, e.g. color-detection) —
+//                   for a deployment that contains just that node
 //
 // Stage entries get their own actionType (suffix "-stage") and a "(Stage)"
 // name: the run-workflow catalog is org-wide (there is no separate stage
@@ -36,10 +38,12 @@ export function stageEntry(entry, { namespace, suffix = '-stage', ownTypes = [] 
   }
 }
 
-/** @param {{ namespace: string, root?: string, outDir?: string, suffix?: string }} opts */
-export function prepareStageCatalog({ namespace, root = 'actions', outDir = 'build/catalog/stage', suffix = '-stage' }) {
-  const sources = findEntries(root).map((p) => checkEntry(p))
-  const ownTypes = sources.map((s) => s.entry.actionType)
+/** @param {{ namespace: string, root?: string, outDir?: string, suffix?: string, only?: string }} opts */
+export function prepareStageCatalog({ namespace, root = 'actions', outDir = 'build/catalog/stage', suffix = '-stage', only }) {
+  const all = findEntries(root).map((p) => checkEntry(p))
+  const sources = only ? all.filter((s) => s.path.split(/[\\/]/).slice(-2)[0] === only) : all
+  if (only && !sources.length) throw new Error(`no catalog entry for node "${only}"`)
+  const ownTypes = all.map((s) => s.entry.actionType)
   mkdirSync(outDir, { recursive: true })
   return sources.map(({ path, entry }) => {
     const out = stageEntry(entry, { namespace, suffix, ownTypes })
@@ -53,13 +57,15 @@ export function prepareStageCatalog({ namespace, root = 'actions', outDir = 'bui
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const i = process.argv.indexOf('--namespace')
   const namespace = i > 0 ? process.argv[i + 1] : ''
+  const j = process.argv.indexOf('--only')
+  const only = j > 0 ? process.argv[j + 1] : undefined
   if (!namespace) {
     console.error('usage: node scripts/prepare-stage-catalog.mjs --namespace <runtime-namespace>')
     process.exit(2)
   }
   let results
   try {
-    results = prepareStageCatalog({ namespace })
+    results = prepareStageCatalog({ namespace, only })
   } catch (e) {
     console.error(e.message)
     process.exit(2)

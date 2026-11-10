@@ -22,6 +22,12 @@ describe('prepare-stage-catalog', () => {
     expect(cd.name).toBe('Territory Text Color Detection (Stage)')
     expect(readFileSync('actions/color-detection/color-detection.entry.json', 'utf8')).toBe(before)
   })
+  it('--only: just one node (for a deployment that contains only that node)', () => {
+    const outDir = mkdtempSync(join(tmpdir(), 'stage-catalog-'))
+    const r = prepareStageCatalog({ namespace: '44531-798fuchsiatarsier-stage', outDir, only: 'color-detection' })
+    expect(r.map((x: any) => x.actionType)).toEqual(['territory-color-detection-stage'])
+    expect(() => prepareStageCatalog({ namespace: '44531-798fuchsiatarsier-stage', outDir, only: 'nope' })).toThrow(/no catalog entry/)
+  })
   it('rejects a malformed namespace', () => {
     const e = JSON.parse(readFileSync('actions/image-extension/image-extension.entry.json', 'utf8'))
     expect(() => stageEntry(e, { namespace: 'Bad_NS' })).toThrow(/invalid Runtime namespace/)
