@@ -4,8 +4,8 @@
 #   <node>-web     web: "raw", require-adobe-auth: false — POST /submit, GET /status
 #                  (IMS inbound auth is done by mountFfcpeNodeRoutes itself)
 #   <node>-worker  runs the node handler asynchronously
-# Node pairs are added on their feature branches (feature/color-detection,
-# feature/image-extension).
+# STAGE DEPLOY BRANCH stage/color-detection: Color Detection ONLY.
+# Image Extension is intentionally not in this manifest, so it cannot be deployed from here.
 #
 # Not wired to an Adobe Developer Console workspace yet — nothing is deployed.
 application:
@@ -31,27 +31,5 @@ application:
             limits:
               memorySize: 1024
               timeout: 120000
-            inputs:
-              LOG_LEVEL: info
-          # --- Image Extension (Firefly Services) ---
-          image-extension-web:
-            function: actions/image-extension/image-extension.web.ts
-            web: "raw"
-            runtime: nodejs:22
-            annotations:
-              require-adobe-auth: false
-            inputs:
-              # comma-separated caller client ids; empty = run-workflow-service only
-              ALLOWED_CALLER_CLIENT_IDS: $ALLOWED_CALLER_CLIENT_IDS
-          image-extension-worker:
-            function: actions/image-extension/image-extension.worker.ts
-            runtime: nodejs:22
-            limits:
-              memorySize: 2048
-              timeout: 600000
-            annotations:
-              # injects the workspace OAuth Server-to-Server credential (Firefly Services)
-              # as __ims_oauth_s2s — read only by src/core/firefly-auth.js
-              include-ims-credentials: true
             inputs:
               LOG_LEVEL: info
