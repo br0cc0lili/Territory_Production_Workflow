@@ -1,0 +1,152 @@
+{
+  "status": "ok",
+  "roles": [
+    {
+      "role": "headline",
+      "fontSizePt": 87,
+      "threshold": 3,
+      "source": "lines",
+      "lines": 2,
+      "zones": 7,
+      "readability": "OK",
+      "readable": true,
+      "color": {
+        "id": "Audi_Colour_Library_digital/White RGB",
+        "name": "White RGB",
+        "model": "RGB",
+        "values": [
+          1,
+          1,
+          1
+        ],
+        "rgb": [
+          255,
+          255,
+          255
+        ],
+        "hex": "#ffffff"
+      },
+      "contrast": {
+        "weakestZone": 7.8,
+        "overallP10": 11.41,
+        "mean": 15.75
+      },
+      "weakest": {
+        "line": 1,
+        "zone": 2,
+        "p10": 7.8
+      },
+      "ranking": [
+        {
+          "id": "Audi_Colour_Library_digital/White RGB",
+          "name": "White RGB",
+          "hex": "#ffffff",
+          "weakestZone": 7.8,
+          "overallP10": 11.41,
+          "mean": 15.75
+        },
+        {
+          "id": "Audi_Colour_Library_digital/Audi Progressive Red RGB",
+          "name": "Audi Progressive Red RGB",
+          "hex": "#f50537",
+          "weakestZone": 2.45,
+          "overallP10": 2.76,
+          "mean": 3.76
+        },
+        {
+          "id": "Audi_Colour_Library_digital/Audi Black RGB",
+          "name": "Audi Black RGB",
+          "hex": "#000000",
+          "weakestZone": 1.05,
+          "overallP10": 1.12,
+          "mean": 1.57
+        }
+      ],
+      "warning": null
+    },
+    {
+      "role": "subline",
+      "fontSizePt": 37,
+      "threshold": 3,
+      "source": "lines",
+      "lines": 1,
+      "zones": 6,
+      "readability": "OK",
+      "readable": true,
+      "color": {
+        "id": "Audi_Colour_Library_digital/White RGB",
+        "name": "White RGB",
+        "model": "RGB",
+        "values": [
+          1,
+          1,
+          1
+        ],
+        "rgb": [
+          255,
+          255,
+          255
+        ],
+        "hex": "#ffffff"
+      },
+      "contrast": {
+        "weakestZone": 6.68,
+        "overallP10": 7.24,
+        "mean": 13.13
+      },
+      "weakest": {
+        "line": 0,
+        "zone": 1,
+        "p10": 6.68
+      },
+      "ranking": [
+        {
+          "id": "Audi_Colour_Library_digital/White RGB",
+          "name": "White RGB",
+          "hex": "#ffffff",
+          "weakestZone": 6.68,
+          "overallP10": 7.24,
+          "mean": 13.13
+        },
+        {
+          "id": "Audi_Colour_Library_digital/Audi Progressive Red RGB",
+          "name": "Audi Progressive Red RGB",
+          "hex": "#f50537",
+          "weakestZone": 1.58,
+          "overallP10": 1.71,
+          "mean": 3.1
+        },
+        {
+          "id": "Audi_Colour_Library_digital/Audi Black RGB",
+          "name": "Audi Black RGB",
+          "hex": "#000000",
+          "weakestZone": 1.23,
+          "overallP10": 1.25,
+          "mean": 1.76
+        }
+      ],
+      "warning": null
+    }
+  ],
+  "warnings": [],
+  "summary": "headline White RGB 7.8:1 | subline White RGB 6.68:1",
+  "scoring": {
+    "method": "weakest-zone",
+    "percentile": 0.1,
+    "zones": {
+      "maxPerLine": 12,
+      "widthPerHeight": 2,
+      "minPixels": 12
+    },
+    "thresholds": {
+      "large": 3,
+      "normal": 4.5,
+      "largeFromPt": 18
+    }
+  },
+  "background": {
+    "width": 1080,
+    "height": 1080
+  },
+  "candidates": 3
+}
