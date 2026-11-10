@@ -62,7 +62,7 @@ describe('Photoshop action V2 node probe (simulated sandbox)', () => {
     expect(calls.some((c) => c[0] === 'text')).toBe(true)
     const put = calls.find((c) => c[0] === 'putPixels')[1]
     const strip = put.imageData
-    const decoded = JSON.parse(payload.decodePixelPayload({ width: strip.width, height: strip.height, data: strip.data }))
+    const decoded = JSON.parse(payload.decodePixelPayload({ width: strip.width, height: strip.height, data: strip.data })!)
     expect(decoded.decision).toEqual(expected)
     expect(r.outputs).toMatchObject({ pluginTempJson: 'written', banner: 'ok', textLayer: 'ok', pixelStrip: expect.stringMatching(/rows$/) })
   })
