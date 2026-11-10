@@ -52,6 +52,8 @@ export interface SdkRunOptions {
   token?: string | null
   webName?: string
   workerName?: string
+  /** extra top-level worker args, as App Builder injects them (e.g. __ims_oauth_s2s) */
+  workerArgs?: Record<string, unknown>
 }
 
 export async function runThroughSdk(opts: SdkRunOptions) {
@@ -66,7 +68,7 @@ export async function runThroughSdk(opts: SdkRunOptions) {
     web: { package: 'territory-ffcpe-nodes', name: opts.webName ?? 'test-web' },
     jobStore,
     orchestrator: jobOrchestratorFromFn(async (payload) => {
-      await worker({ ...payload, LOG_LEVEL: 'error' })
+      await worker({ ...opts.workerArgs, ...payload, LOG_LEVEL: 'error' })
     }),
     authenticate: createImsInboundAuth({
       validateToken: async (token, clientId) =>
