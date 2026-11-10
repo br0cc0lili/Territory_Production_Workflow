@@ -6,11 +6,14 @@ import { Hono } from 'hono'
 import { ToOpenWhiskAction } from 'hono-openwhisk-adapter'
 import { mountFfcpeNodeRoutes } from '@adobe/ffcpe-custom-node-app-builder'
 import { restrictCallers } from '../shared/caller-guard'
+import { usePublicStatusUrl } from '../shared/public-status-url'
 
 const app = new Hono()
 
 // only Workflow Builder's run-workflow service may call (see actions/shared/caller-guard.ts)
 restrictCallers(app)
+// statusUrl → public URL (the SDK's points at Runtime's internal host; see public-status-url.ts)
+usePublicStatusUrl(app, { packageName: 'territory-ffcpe-nodes', actionName: 'image-extension-web' })
 
 mountFfcpeNodeRoutes(app, {
   worker: { package: 'territory-ffcpe-nodes', name: 'image-extension-worker' },
