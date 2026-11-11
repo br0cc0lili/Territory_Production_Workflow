@@ -72,3 +72,7 @@ open -a "Adobe Photoshop 2026" poc/photoshop-action-v2/dist/color-detection.loca
 The desktop harness opens only the given background, runs the same bundle,
 writes the JSON to `--out`, and closes only the document it opened.
 `test-data/*.png` (client asset) and `dist/` are git-ignored.
+
+## Production
+
+`dist/color-decision.psjs` (`src/production.js`): the decision is written only as XMP, and the image stays unchanged. The InDesign side lives in `../indesign-apply/`. Architecture, hand-over options and open questions: `../COLOR-DECISION-HANDOVER.md`. Cloud test: Run 3 in `CLOUD-TEST.md`.

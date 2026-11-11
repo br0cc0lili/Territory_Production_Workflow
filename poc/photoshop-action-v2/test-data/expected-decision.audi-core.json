@@ -1,0 +1,87 @@
+{
+  "schema": "territory.colorDecision/1",
+  "status": "ok",
+  "image": {
+    "width": 1080,
+    "height": 1080
+  },
+  "roles": [
+    {
+      "role": "headline",
+      "readable": true,
+      "readability": "OK",
+      "threshold": 3,
+      "weakestZone": 7.8,
+      "swatch": {
+        "id": "Audi_Colour_Library_digital/White RGB",
+        "name": "White RGB",
+        "model": "RGB",
+        "values": [
+          1,
+          1,
+          1
+        ],
+        "rgb": [
+          255,
+          255,
+          255
+        ],
+        "hex": "#ffffff"
+      },
+      "ranking": [
+        [
+          "Audi_Colour_Library_digital/White RGB",
+          7.8
+        ],
+        [
+          "Audi_Colour_Library_digital/Audi Progressive Red RGB",
+          2.45
+        ],
+        [
+          "Audi_Colour_Library_digital/Audi Black RGB",
+          1.05
+        ]
+      ],
+      "warning": null
+    },
+    {
+      "role": "subline",
+      "readable": true,
+      "readability": "OK",
+      "threshold": 3,
+      "weakestZone": 6.68,
+      "swatch": {
+        "id": "Audi_Colour_Library_digital/White RGB",
+        "name": "White RGB",
+        "model": "RGB",
+        "values": [
+          1,
+          1,
+          1
+        ],
+        "rgb": [
+          255,
+          255,
+          255
+        ],
+        "hex": "#ffffff"
+      },
+      "ranking": [
+        [
+          "Audi_Colour_Library_digital/White RGB",
+          6.68
+        ],
+        [
+          "Audi_Colour_Library_digital/Audi Progressive Red RGB",
+          1.58
+        ],
+        [
+          "Audi_Colour_Library_digital/Audi Black RGB",
+          1.23
+        ]
+      ],
+      "warning": null
+    }
+  ],
+  "warnings": []
+}

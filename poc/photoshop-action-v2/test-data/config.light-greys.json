@@ -1,0 +1,97 @@
+{
+  "id": "marderabwehr/light-greys",
+  "textLayout": {
+    "coordinateSpace": {
+      "unit": "pt",
+      "pageBounds": [
+        0,
+        0,
+        1080,
+        1080
+      ]
+    },
+    "roles": [
+      {
+        "role": "headline",
+        "fontSizePt": 87,
+        "lines": [
+          [
+            80,
+            60,
+            170,
+            700
+          ],
+          [
+            175,
+            60,
+            265,
+            560
+          ]
+        ]
+      },
+      {
+        "role": "subline",
+        "fontSizePt": 37,
+        "lines": [
+          [
+            900,
+            60,
+            945,
+            620
+          ]
+        ]
+      }
+    ]
+  },
+  "palette": {
+    "swatches": [
+      {
+        "id": "Audi_Colour_Library_digital/Grey 10 RGB",
+        "name": "Grey 10 RGB",
+        "model": "RGB",
+        "values": [
+          0.8980392217636108,
+          0.8980392217636108,
+          0.8980392217636108
+        ]
+      },
+      {
+        "id": "Audi_Colour_Library_digital/Grey 8 RGB",
+        "name": "Grey 8 RGB",
+        "model": "RGB",
+        "values": [
+          0.800000011920929,
+          0.800000011920929,
+          0.800000011920929
+        ]
+      },
+      {
+        "id": "Audi_Colour_Library_digital/Audi Black RGB",
+        "name": "Audi Black RGB",
+        "model": "RGB",
+        "values": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "id": "Audi_Colour_Library_digital/Audi Progressive Red RGB",
+        "name": "Audi Progressive Red RGB",
+        "model": "RGB",
+        "values": [
+          0.9607843160629272,
+          0.019607843831181526,
+          0.21568627655506134
+        ]
+      }
+    ],
+    "selectedIds": [
+      "Audi_Colour_Library_digital/Grey 10 RGB",
+      "Audi_Colour_Library_digital/Grey 8 RGB",
+      "Audi_Colour_Library_digital/Audi Black RGB",
+      "Audi_Colour_Library_digital/Audi Progressive Red RGB"
+    ]
+  },
+  "options": {}
+}

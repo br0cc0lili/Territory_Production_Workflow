@@ -18,7 +18,9 @@
 // Decode with: node poc/photoshop-action-v2/decode-carrier.mjs <processed image>
 
 const detect = require('../../../src/nodes/color-detection/detect.js')
-const { decodePixelPayload, encodePixelPayload, MAGIC, utf8Encode, utf8Decode } = require('./payload.js')
+const { decodePixelPayload, encodePixelPayload, MAGIC, utf8Decode } = require('./payload.js')
+const { kindOf, pngTextChunks, asBytes, safeJson, looksLikeConfig } = require('./config-input.js')
+const { viaImaging, viaRawExport } = require('./pixels.js')
 
 // Candidate placeholders — written as literals so a platform-side text
 // replacement changes them; compared against strings rebuilt from parts.
@@ -48,51 +50,11 @@ const req = (m) => require(m) // eslint-disable-line
 const now = () => Date.now()
 const errText = (e) => String((e && e.message) || e).slice(0, 300)
 
-function kindOf(bytes) {
-  const b = bytes
-  if (b.length > 8 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return 'png'
-  if (b.length > 3 && b[0] === 0xff && b[1] === 0xd8) return 'jpeg'
-  if (b.length > 4 && b[0] === 0x38 && b[1] === 0x42 && b[2] === 0x50 && b[3] === 0x53) return 'psd'
-  const head = String.fromCharCode.apply(null, Array.from(b.subarray(0, 64))).trim()
-  if (head.startsWith('{') || head.startsWith('[')) return 'json'
-  return 'other'
-}
 
 const utf8 = utf8Decode // no TextDecoder in Photoshop's script runtime
 
-// PNG text chunks (tEXt, uncompressed iTXt) → { keyword: text }
-function pngTextChunks(b) {
-  const out = {}
-  let i = 8
-  while (i + 12 <= b.length) {
-    const len = ((b[i] << 24) >>> 0) + (b[i + 1] << 16) + (b[i + 2] << 8) + b[i + 3]
-    const type = String.fromCharCode(b[i + 4], b[i + 5], b[i + 6], b[i + 7])
-    const data = b.subarray(i + 8, i + 8 + len)
-    if (type === 'tEXt' || type === 'iTXt') {
-      const z = data.indexOf(0)
-      const key = String.fromCharCode.apply(null, Array.from(data.subarray(0, z)))
-      if (type === 'tEXt') out[key] = String.fromCharCode.apply(null, Array.from(data.subarray(z + 1)))
-      else if (data[z + 1] === 0) {
-        let p = z + 3
-        p = data.indexOf(0, p) + 1 // language tag
-        p = data.indexOf(0, p) + 1 // translated keyword
-        out[key] = utf8(data.subarray(p))
-      }
-    }
-    if (type === 'IEND') break
-    i += 12 + len
-  }
-  return out
-}
 
-function asBytes(x) {
-  if (x instanceof Uint8Array) return x
-  if (x instanceof ArrayBuffer) return new Uint8Array(x)
-  if (typeof x === 'string') return utf8Encode(x)
-  return new Uint8Array(x)
-}
 
-function looksLikeConfig(o) { return o && typeof o === 'object' && o.textLayout && o.palette }
 
 async function probeInputs(fs, report) {
   const found = []
@@ -124,38 +86,9 @@ async function probeInputs(fs, report) {
   return found
 }
 
-function safeJson(s) { try { return JSON.parse(s) } catch (e) { return null } }
 
-function toRgba(width, height, components, bytes) {
-  if (components === 4) return { width, height, data: bytes }
-  const out = new Uint8Array(width * height * 4)
-  for (let i = 0, j = 0; i < width * height; i++, j += components) {
-    out[i * 4] = bytes[j]; out[i * 4 + 1] = bytes[j + 1]; out[i * 4 + 2] = bytes[j + 2]; out[i * 4 + 3] = 255
-  }
-  return { width, height, data: out }
-}
 
-async function viaImaging(ps, doc) {
-  if (!ps.imaging || typeof ps.imaging.getPixels !== 'function') throw new Error('photoshop.imaging.getPixels not available')
-  const r = await ps.imaging.getPixels({ documentID: doc.id, componentSize: 8, applyAlpha: true, colorSpace: 'RGB', colorProfile: 'sRGB IEC61966-2.1' })
-  try {
-    const d = r.imageData
-    return toRgba(d.width, d.height, d.components, await d.getData({ chunky: true }))
-  } finally { if (r.imageData && r.imageData.dispose) r.imageData.dispose() }
-}
 
-async function viaRawExport(ps, doc) {
-  const uxp = req('uxp')
-  const lfs = uxp.storage.localFileSystem
-  const width = Math.round(doc.width), height = Math.round(doc.height)
-  const folder = await lfs.getTemporaryFolder()
-  const file = await folder.createFile('tcd-background.raw', { overwrite: true })
-  await ps.app.batchPlay([{ _obj: 'save', as: { _obj: 'rawFormat', fileCreator: '8BIM', channelsInterleaved: true }, in: { _path: lfs.createSessionToken(file), _kind: 'local' }, documentID: doc.id, copy: true, lowerCase: true }], { modalBehavior: 'execute' })
-  const bytes = new Uint8Array(await file.read({ format: uxp.storage.formats.binary }))
-  const n = Math.round(bytes.length / (width * height))
-  if (n < 3 || n * width * height !== bytes.length) throw new Error(`RAW size ${bytes.length} ≠ ${width}×${height}×n`)
-  return toRgba(width, height, n, bytes)
-}
 
 // Config PNG whose text chunk was stripped: open it and read its pixel payload.
 async function configFromPngPixels(ps, path, report) {

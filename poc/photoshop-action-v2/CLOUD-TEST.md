@@ -61,3 +61,42 @@ the sandbox), and the same JSON encoded in the pixels as a fallback (the
 script opens the PNG and decodes it) in case the platform re-encodes the
 asset. Alternatives: input[0] (if it carries text into the script), or one
 script per layout with the config embedded (`node-probe.embedded.psjs`).
+
+## Results so far
+
+- **2026-11-11, Run 2 passed in Workflow Builder:**
+  - getPixels OK (20 ms), RAW fallback OK (36 ms);
+  - config read from Assets (`additional[0]`, png text chunk);
+  - headline White RGB 7.8:1, subline White RGB 6.68:1, status OK.
+
+## Run 3: production script with a dynamic config (no visible changes)
+
+**Script:** `dist/color-decision.psjs` (39 KB). It writes the decision only as XMP (`tcd:ColorDecision`) and leaves the image unchanged. See `../COLOR-DECISION-HANDOVER.md`.
+
+**Setup:** same wiring as Run 2, without input[0].
+- Input Image: the Marderabwehr background.
+- Script: `dist/color-decision.psjs`.
+- Assets: one config PNG per run (table below).
+- Output Formats: **PNG**.
+
+Run it three times; only the Assets PNG changes:
+
+| Assets | Expected decision |
+|---|---|
+| `dist/config.light-greys.png` | status **ok**: headline **Grey 10 RGB 6.2:1**, subline **Grey 10 RGB 5.3:1** |
+| `dist/config.mid-greys.png` | status **review**: headline **Grey 5 RGB 2.63:1 LOW**, subline **Grey 5 RGB 1.69:1 LOW** |
+| `dist/config.audi-core.png` | status **ok**: White RGB 7.8:1 / 6.68:1 (same as Run 2) |
+
+**Checks:**
+1. The output looks identical to the input: no bar, no text, 1080×1080.
+2. Decode each downloaded file:
+   ```bash
+   node poc/photoshop-action-v2/decode-carrier.mjs <file>
+   ```
+   The `decision` block must show the matching `configId` (`marderabwehr/<variant>`) and the roles above.
+3. Optional: run once more with Output **JPEG** or **Original**, to confirm that metadata survives those formats as well.
+
+**Reading the results:**
+- **`decision: null`** means Workflow Builder strips metadata. Note which output format was used. The fallbacks are in the handover doc.
+- **The run fails** with "Color Decision could not be written into the image metadata" means the cloud Photoshop refused the XMP write.
+- **The decision is identical across all three runs** means Assets did not change. Check the `configId`.

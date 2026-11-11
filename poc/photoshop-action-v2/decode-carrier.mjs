@@ -1,5 +1,8 @@
 // Reads the Color Detection result back from the node's "Processed Image"
-// (PNG / JPEG / PSD / TIFF), from every channel the probe writes:
+// (PNG / JPEG / PSD / TIFF):
+//   decision  PRODUCTION carrier — XMP tcd:ColorDecision (decision-xmp.js), written by
+//             dist/color-decision.psjs; the image itself is unchanged
+// and the diagnostic channels of the probe (node-probe.js):
 //   xmp       XMP dc:description "TCD1:<compact JSON>"   (any format, if metadata kept)
 //   strip     full report in the bottom pixel rows        (PNG / TIFF; jimp-readable)
 //   layers    PSD layer names "TCD <role>=<swatch id> <OK|LOW>"
@@ -12,6 +15,9 @@ import { fileURLToPath } from 'node:url'
 
 const require = createRequire(import.meta.url)
 const { decodePixelPayload, MAGIC } = require('./src/payload.js')
+const X = require('./src/decision-xmp.js')
+
+export const fromDecisionXmp = (bytes) => X.extractFromXmp(X.xmpTextFromBytes(new Uint8Array(bytes)))
 
 const xmlUnescape = (s) => s.replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#xA;/g, '\n').replace(/&#xD;/g, '\r').replace(/&amp;/g, '&')
 
@@ -50,14 +56,16 @@ export async function fromStrip(bytes) {
 }
 
 export async function decodeCarrier(bytes) {
-  return { xmp: fromXmp(bytes), strip: await fromStrip(bytes), layers: fromLayerNames(bytes) }
+  return { decision: fromDecisionXmp(bytes), xmp: fromXmp(bytes), strip: await fromStrip(bytes), layers: fromLayerNames(bytes) }
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const f = process.argv[2]
   if (!f) { console.error('usage: decode-carrier.mjs <processed image>'); process.exit(2) }
   const r = await decodeCarrier(readFileSync(f))
+  const d = r.decision
   console.log(JSON.stringify({
+    decision: d && { status: d.status, configId: d.configId, error: d.error, roles: d.roles.map((x) => `${x.role}: ${x.swatch ? x.swatch.name : '-'} ${x.weakestZone}:1 ${x.readability}`), warnings: d.warnings, engine: d.engine },
     xmp: r.xmp,
     strip: r.strip && { ok: r.strip.ok, status: r.strip.decision && r.strip.decision.status, summary: r.strip.decision && r.strip.decision.summary, pixels: r.strip.pixels, placeholders: r.strip.placeholders, configSource: r.strip.configSource, outputs: r.strip.outputs, error: r.strip.error },
     layers: r.layers,

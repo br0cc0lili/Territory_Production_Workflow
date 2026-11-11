@@ -9,11 +9,17 @@
 //                                        closes ONLY that document
 //   dist/execute-actions.request.json    example Photoshop API v2 request body (not sent)
 //
+// Production ("Photoshop action V2" node, Workflow Builder):
+//   dist/color-decision.psjs             config from Assets → decision as XMP only
+//   dist/config.<variant>.png            config PNGs for the Assets port (test-data/config.*.json)
+//   dist/color-decision.local-<variant>.psjs  desktop harness (with --background --probe-dir)
+//
 //   node poc/photoshop-action-v2/build.mjs [--config <json>] [--background <png>] [--out <json>]
 import { build } from 'esbuild'
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { makeConfigPng } from './make-config-png.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const DIST = join(HERE, 'dist')
@@ -179,6 +185,54 @@ await (async function smokeHarness() {
     writeFileSync(join(DIST, 'smoke.local-test.psjs'), smokeHarness.split('__ADDITIONAL_CONTENTS_PATH_0__').join(configPng))
     const code = (await bundle(harness, null, probe)).split('__ADDITIONAL_CONTENTS_PATH_0__').join(configPng)
     writeFileSync(join(DIST, 'node-probe.local-test.psjs'), code)
+  }
+  // --- production: decision as XMP only (no visible change) ---
+  // Errors from writing the decision propagate on purpose: the node run fails
+  // rather than emitting an image without a decision.
+  const production = await bundle('await __colorDetection.run();\n', null, 'src/production.js')
+  writeFileSync(join(DIST, 'color-decision.psjs'), production)
+  const variants = readdirSync(join(HERE, 'test-data')).map((f) => /^config\.(.+)\.json$/.exec(f)).filter(Boolean).map((m) => m[1]).filter((v) => v !== 'marderabwehr')
+  for (const v of variants) writeFileSync(join(DIST, `config.${v}.png`), await makeConfigPng(readFileSync(join(HERE, 'test-data', `config.${v}.json`), 'utf8')))
+  if (background && probeDir) {
+    const saveAs = {
+      png: { _obj: 'PNGFormat', method: { _enum: 'PNGMethod', _value: 'quick' } },
+      jpg: { _obj: 'JPEG', extendedQuality: 10, matteColor: { _enum: 'matteColor', _value: 'none' } },
+      psd: { _obj: 'photoshop35Format', maximizeCompatibility: true },
+      tif: { _obj: 'TIFF', byteOrder: { _enum: 'platform', _value: 'IBMPC' } },
+    }
+    for (const v of variants) {
+      const harness = `
+await (async function productionHarness() {
+  const ps = require('photoshop'); const lfs = require('uxp').storage.localFileSystem;
+  const folder = await lfs.getEntryWithUrl(${JSON.stringify('file:' + probeDir)});
+  const saveAs = ${JSON.stringify(saveAs)};
+  const status = { variant: ${JSON.stringify(v)} };
+  try {
+    await ps.core.executeAsModal(async () => {
+      const doc = await ps.app.open(await lfs.getEntryWithUrl(${JSON.stringify('file:' + background)}));
+      try {
+        try { status.decision = await __colorDetection.run(); } catch (e) { status.runError = String(e && e.message || e); }
+        status.layers = doc.layers.length;
+        status.size = [doc.width, doc.height];
+        for (const ext of Object.keys(saveAs)) {
+          try {
+            const f = await folder.createFile(${JSON.stringify(v + '.')} + ext, { overwrite: true });
+            await ps.app.batchPlay([{ _obj: 'save', as: saveAs[ext], in: { _path: lfs.createSessionToken(f), _kind: 'local' }, documentID: doc.id, copy: true, lowerCase: true }], { modalBehavior: 'execute' });
+            status[ext] = 'ok';
+          } catch (e) { status[ext] = String(e && e.message || e); }
+        }
+      } finally {
+        await doc.closeWithoutSaving();   // only the document this harness opened
+      }
+    }, { commandName: 'Territory Color Decision (local)' });
+  } catch (e) { status.harnessError = String(e && e.message || e); }
+  const out = await folder.createFile(${JSON.stringify(v + '.status.json')}, { overwrite: true });
+  await out.write(JSON.stringify(status, null, 2));
+})();
+`
+      const code = (await bundle(harness, null, 'src/production.js')).split('__ADDITIONAL_CONTENTS_PATH_0__').join(join(DIST, `config.${v}.png`))
+      writeFileSync(join(DIST, `color-decision.local-${v}.psjs`), code)
+    }
   }
   return { scriptBytes: Buffer.byteLength(script) }
 }
