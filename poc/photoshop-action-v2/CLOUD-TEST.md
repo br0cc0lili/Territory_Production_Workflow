@@ -100,3 +100,64 @@ Run it three times; only the Assets PNG changes:
 - **`decision: null`** means Workflow Builder strips metadata. Note which output format was used. The fallbacks are in the handover doc.
 - **The run fails** with "Color Decision could not be written into the image metadata" means the cloud Photoshop refused the XMP write.
 - **The decision is identical across all three runs** means Assets did not change. Check the `configId`.
+
+## Run 4 (PRIORITY): Black/White, does XMP survive the real pipeline?
+
+**Files** (in `dist/`, made by `node poc/photoshop-action-v2/build.mjs`):
+
+| Node port | File |
+|---|---|
+| Input Image | `test-data/marderabwehr_background_1080.png` |
+| Script | `dist/color-decision.js`: the production script, a `.js` copy of `color-decision.psjs`, 40 KB |
+| Assets | `dist/config.black-white.png`: Audi Black RGB and White RGB from `Audi_Colour_Library_digital.ase`, definitions unchanged |
+| Output Formats | **PNG** |
+
+**Wiring:**
+```
+Input Image ─► Photoshop action V2 ─► Output Image
+Input Image (config PNG) ─► Assets
+```
+Do not connect input[0].
+
+**Steps:**
+1. Run the workflow, then download the processed image twice:
+   - **(a)** from the Output Image node;
+   - **(b)** from Generation history.
+2. Verify each download:
+   ```bash
+   node poc/photoshop-action-v2/verify-output.mjs <downloaded file>
+   ```
+   PASS means all of the following:
+   - the decision is in XMP and equals `test-data/expected-decision.black-white.json` (headline White RGB 7.8:1, subline White RGB 6.68:1);
+   - there are no diagnostic carriers;
+   - the size is 1080×1080;
+   - the pixels are bit-identical to the input.
+3. If both pass, repeat with Output Formats **JPEG** and **Original**. With JPEG, pixels differ slightly because of re-encoding, so only the decision check matters there.
+
+**If something fails:**
+- **`decision in XMP: FAIL`:** metadata was removed. Note which download path (a or b) and which format, and send me the file.
+- **`pixels identical: FAIL` on PNG:** the node re-rendered the image, for example through a colour-profile conversion. The verifier prints how large the difference is.
+- **The run itself fails:** send the error text. Only then try `dist/color-decision.noawait.js` (in that variant, errors are logged instead of failing the run).
+
+Optional: `dist/config.black-white-print.png` uses the CMYK swatches (Audi Black CMYK C40 K100 and White CMYK). It should give the same choice of White, with the swatch kept in CMYK. To check it:
+```bash
+node poc/photoshop-action-v2/verify-output.mjs <file> --expected poc/photoshop-action-v2/test-data/expected-decision.black-white-print.json
+```
+
+## Run 5 (after Run 4): how do optional inputs reach a script?
+
+This answers whether designers can pick colours per run without config PNGs.
+
+| Node port | Input |
+|---|---|
+| Script | `dist/input-discovery.js` (diagnostic: draws a yellow panel) |
+| Input Image | any image |
+| Assets | try `test-data/selection.example.csv`. If the port refuses a CSV, use `dist/config.black-white.png` instead. |
+| input[0] | an **Input Text** node containing `Audi Black RGB, White RGB` |
+
+Send me a screenshot of the yellow panel. It shows:
+- every placeholder the platform replaced (`a0`, `a1`, `i0`–`i6`);
+- what arrived through each one: a file path (with the file kind and its first characters), or inline text;
+- `script.args`, `env` and extra globals.
+
+Locally, a CSV given as a second asset reads as `a1 -> csv/text`.

@@ -64,6 +64,14 @@ describe('apply-core (plugin conventions)', () => {
     expect(p.paras[0].fillColor.preexisting).toBe(true)
     expect(p.paras[1].fillColor).toMatchObject({ space: 'rgb', colorValue: [245, 5, 55] })
   })
+  it('print (CMYK) swatches are created in CMYK with the ASE values (Audi Black CMYK = C40 K100)', async () => {
+    const d = decisionOf('black-white-print')
+    d.roles[1].swatch = JSON.parse(readFileSync(join(POC, 'config.black-white-print.json'), 'utf8')).palette.swatches[0]
+    const p = fakePage(['H', 'S'], JSON.stringify(d))
+    await core.applyToPage(fakeDoc(), p.page, idm, {}, null)
+    expect(p.paras[0].fillColor).toMatchObject({ name: 'White CMYK', space: 'cmyk', colorValue: [0, 0, 0, 0] })
+    expect(p.paras[1].fillColor).toMatchObject({ name: 'Audi Black CMYK', space: 'cmyk', colorValue: [40, 0, 0, 100] })
+  })
   it('fail closed: error status, no decision, wrong config → nothing applied, template colours stay', async () => {
     const err = fakePage(['H', 'S'], JSON.stringify(X.errorDecision('bad config')))
     expect(await core.applyToPage(fakeDoc(), err.page, idm, {}, null)).toMatchObject({ status: 'skipped', reason: 'Color Detection failed: bad config' })

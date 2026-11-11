@@ -10,7 +10,8 @@
 //   dist/execute-actions.request.json    example Photoshop API v2 request body (not sent)
 //
 // Production ("Photoshop action V2" node, Workflow Builder):
-//   dist/color-decision.psjs             config from Assets → decision as XMP only
+//   dist/color-decision.psjs / .js       config from Assets → decision as XMP only (.js for Workflow Builder)
+//   dist/color-decision.noawait.js       fallback form without top-level await
 //   dist/config.<variant>.png            config PNGs for the Assets port (test-data/config.*.json)
 //   dist/color-decision.local-<variant>.psjs  desktop harness (with --background --probe-dir)
 //
@@ -113,6 +114,10 @@ await (async function localHarness() {
   if (!/\nawait main\(\)\s*$/.test(smoke)) throw new Error('smoke.js must end with "await main()"')
   writeFileSync(join(DIST, 'smoke.psjs'), smoke)
   writeFileSync(join(DIST, 'smoke.noawait.psjs'), smoke.replace(/\nawait main\(\)\s*$/, '\nmain()\n'))
+  // diagnostic: how Assets / input[0] / text values reach the script
+  const discovery = readFileSync(join(HERE, 'src/input-discovery.js'), 'utf8')
+  if (!/\nawait main\(\)\s*$/.test(discovery)) throw new Error('input-discovery.js must end with "await main()"')
+  writeFileSync(join(DIST, 'input-discovery.js'), discovery)
   const probeDir = arg('--probe-dir', '')
   if (background && probeDir) {
     // simulate the node: the platform replaces __ADDITIONAL_CONTENTS_PATH_0__ with the Assets file
@@ -191,6 +196,11 @@ await (async function smokeHarness() {
   // rather than emitting an image without a decision.
   const production = await bundle('await __colorDetection.run();\n', null, 'src/production.js')
   writeFileSync(join(DIST, 'color-decision.psjs'), production)
+  // Workflow Builder's Script port takes a .js file — same script, .js name
+  writeFileSync(join(DIST, 'color-decision.js'), production)
+  // only if the top-level-await form does not run in the node: errors are then
+  // logged instead of failing the run
+  writeFileSync(join(DIST, 'color-decision.noawait.js'), production.replace(/\nawait __colorDetection\.run\(\);\n$/, '\nPromise.resolve(__colorDetection.run()).catch(function (e) { console.error(e) });\n'))
   const variants = readdirSync(join(HERE, 'test-data')).map((f) => /^config\.(.+)\.json$/.exec(f)).filter(Boolean).map((m) => m[1]).filter((v) => v !== 'marderabwehr')
   for (const v of variants) writeFileSync(join(DIST, `config.${v}.png`), await makeConfigPng(readFileSync(join(HERE, 'test-data', `config.${v}.json`), 'utf8')))
   if (background && probeDir) {

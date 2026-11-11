@@ -1,0 +1,81 @@
+{
+  "schema": "territory.colorDecision/1",
+  "status": "ok",
+  "image": {
+    "width": 1080,
+    "height": 1080
+  },
+  "roles": [
+    {
+      "role": "headline",
+      "readable": true,
+      "readability": "OK",
+      "threshold": 3,
+      "weakestZone": 7.8,
+      "swatch": {
+        "id": "Audi_Colour_Library_print/White CMYK",
+        "name": "White CMYK",
+        "model": "CMYK",
+        "values": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "rgb": [
+          255,
+          255,
+          255
+        ],
+        "hex": "#ffffff"
+      },
+      "ranking": [
+        [
+          "Audi_Colour_Library_print/White CMYK",
+          7.8
+        ],
+        [
+          "Audi_Colour_Library_print/Audi Black CMYK",
+          1.05
+        ]
+      ],
+      "warning": null
+    },
+    {
+      "role": "subline",
+      "readable": true,
+      "readability": "OK",
+      "threshold": 3,
+      "weakestZone": 6.68,
+      "swatch": {
+        "id": "Audi_Colour_Library_print/White CMYK",
+        "name": "White CMYK",
+        "model": "CMYK",
+        "values": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "rgb": [
+          255,
+          255,
+          255
+        ],
+        "hex": "#ffffff"
+      },
+      "ranking": [
+        [
+          "Audi_Colour_Library_print/White CMYK",
+          6.68
+        ],
+        [
+          "Audi_Colour_Library_print/Audi Black CMYK",
+          1.23
+        ]
+      ],
+      "warning": null
+    }
+  ],
+  "warnings": []
+}

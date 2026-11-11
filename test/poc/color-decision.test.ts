@@ -18,7 +18,7 @@ import X from '../../poc/photoshop-action-v2/src/decision-xmp.js'
 
 const POC = join(__dirname, '../../poc/photoshop-action-v2')
 const BG = join(POC, 'test-data/marderabwehr_background_1080.png')
-const VARIANTS = ['audi-core', 'light-greys', 'mid-greys']
+const VARIANTS = ['audi-core', 'light-greys', 'mid-greys', 'black-white', 'black-white-print']
 const fixture = JSON.parse(readFileSync(join(__dirname, '../fixtures/color-detection/mock-submission.json'), 'utf8'))
 const synthConfig = { id: 'synthetic', textLayout: fixture.inputs[1].json, palette: fixture.inputs[2].json, options: {} }
 
@@ -126,5 +126,21 @@ describe('production script (Photoshop action V2, simulated sandbox)', () => {
     expect(pick('light-greys')).toEqual(['headline Grey 10 RGB OK', 'subline Grey 10 RGB OK'])
     expect(pick('mid-greys')).toEqual(['headline Grey 5 RGB LOW', 'subline Grey 5 RGB LOW'])
     expect(got['mid-greys'].status).toBe('review')
+    expect(pick('black-white')).toEqual(['headline White RGB OK', 'subline White RGB OK'])
+    expect(got['black-white-print'].roles[0].swatch).toMatchObject({ name: 'White CMYK', model: 'CMYK', values: [0, 0, 0, 0] })
+  })
+  it('Audi Black + White (original ASE definitions): headline and subline choose independently', async () => {
+    const cfg = JSON.parse(readFileSync(join(POC, 'test-data/config.black-white.json'), 'utf8'))
+    expect(cfg.palette.swatches.map((s: any) => [s.id, s.model, s.values])).toEqual([
+      ['Audi_Colour_Library_digital/Audi Black RGB', 'RGB', [0, 0, 0]], ['Audi_Colour_Library_digital/White RGB', 'RGB', [1, 1, 1]]])
+    const print = JSON.parse(readFileSync(join(POC, 'test-data/config.black-white-print.json'), 'utf8'))
+    expect(print.palette.swatches.map((s: any) => [s.name, s.model, s.values.map((v: number) => +v.toFixed(3))])).toEqual([['Audi Black CMYK', 'CMYK', [0.4, 0, 0, 1]], ['White CMYK', 'CMYK', [0, 0, 0, 0]]])
+    // dark behind the headline, light behind the subline (same 1080 pt page as the config)
+    const img = await raster.decodeImage(await makePng(540, 540, (x, y) => (y * 2 < 500 ? [25, 25, 30] : [235, 235, 230])))
+    const png = new Uint8Array(await makeConfigPng(JSON.stringify(cfg)))
+    const run = runProduction(withPath(script), img, { '/job/assets/config.png': png })
+    await run.finished
+    const d = X.extractFromXmp(run.xmp())
+    expect(d.roles.map((r: any) => [r.role, r.swatch.name, r.readability])).toEqual([['headline', 'White RGB', 'OK'], ['subline', 'Audi Black RGB', 'OK']])
   })
 })
