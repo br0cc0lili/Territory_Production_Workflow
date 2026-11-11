@@ -35,7 +35,7 @@ export function fromXmp(bytes) {
 export function fromLayerNames(bytes) {
   // PSD keeps the full layer name as UTF-16BE ('luni'); dropping NUL bytes makes it searchable
   const s = Buffer.from(bytes).toString('latin1').replace(/\x00/g, '')
-  return [...new Set([...s.matchAll(/TCD [A-Za-z0-9 _-]{1,40}=[^\x00-\x1f]{1,200}? (OK|LOW|NO_DATA)/g)].map((m) => m[0]))]
+  return [...new Set([...s.matchAll(/TCD [A-Za-z0-9 _-]{1,40}=[^\x00-\x1f]{1,200}? (OK|LOW|NO_DATA)/g)].map((m) => m[0].slice(m[0].lastIndexOf('TCD '))))]
 }
 
 export async function fromStrip(bytes) {
