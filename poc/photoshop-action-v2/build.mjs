@@ -49,12 +49,16 @@ export async function buildAll() {
   mkdirSync(DIST, { recursive: true })
   const config = readFileSync(configFile, 'utf8')
   JSON.parse(config)
-  const run = 'Promise.resolve(__colorDetection.run()).catch(function (e) { console.error(e) });\n'
+  // Photoshop unloads a script when its top-level code returns and drops pending
+  // async work (verified in Photoshop 27.10) — so the run is awaited at top level.
+  // *.noawait.psjs: Adobe's documented style (bare call) for the cloud comparison.
+  const run = 'try { await __colorDetection.run(); } catch (e) { console.error(e); }\n'
+  const runNoAwait = 'Promise.resolve(__colorDetection.run()).catch(function (e) { console.error(e) });\n'
   writeFileSync(join(DIST, 'color-detection.psjs'), await bundle(run))
   writeFileSync(join(DIST, 'color-detection.embedded.psjs'), await bundle(run, config))
   if (background && localOut) {
     const harness = `
-(async function localHarness() {
+await (async function localHarness() {
   const ps = require('photoshop'); const lfs = require('uxp').storage.localFileSystem;
   const status = { phase: 'start' };
   async function writeOut(text) {
@@ -97,6 +101,12 @@ export async function buildAll() {
   const probe = 'src/node-probe.js'
   writeFileSync(join(DIST, 'node-probe.psjs'), await bundle(run, null, probe))
   writeFileSync(join(DIST, 'node-probe.embedded.psjs'), await bundle(run, config, probe))
+  writeFileSync(join(DIST, 'node-probe.embedded.noawait.psjs'), await bundle(runNoAwait, config, probe))
+  // minimal smoke test (no bundling needed)
+  const smoke = readFileSync(join(HERE, 'src/smoke.js'), 'utf8')
+  if (!/\nawait main\(\)\s*$/.test(smoke)) throw new Error('smoke.js must end with "await main()"')
+  writeFileSync(join(DIST, 'smoke.psjs'), smoke)
+  writeFileSync(join(DIST, 'smoke.noawait.psjs'), smoke.replace(/\nawait main\(\)\s*$/, '\nmain()\n'))
   const probeDir = arg('--probe-dir', '')
   if (background && probeDir) {
     // simulate the node: the platform replaces __ADDITIONAL_CONTENTS_PATH_0__ with the Assets file
@@ -108,7 +118,7 @@ export async function buildAll() {
       tif: { _obj: 'TIFF', byteOrder: { _enum: 'platform', _value: 'IBMPC' } },
     }
     const harness = `
-(async function probeHarness() {
+await (async function probeHarness() {
   const ps = require('photoshop'); const uxp = require('uxp'); const lfs = uxp.storage.localFileSystem;
   const folder = await lfs.getEntryWithUrl(${JSON.stringify('file:' + probeDir)});
   async function writeText(name, text) { const f = await folder.createFile(name, { overwrite: true }); await f.write(text); }
@@ -137,6 +147,36 @@ export async function buildAll() {
   }
 })();
 `
+    // smoke harness: smoke.js (top-level "await main()" replaced) run on the opened background
+    const smokeHarness = smoke.replace(/\nawait main\(\)\s*$/, '\n') + `
+await (async function smokeHarness() {
+  const ps = require('photoshop'); const lfs = require('uxp').storage.localFileSystem;
+  const folder = await lfs.getEntryWithUrl(${JSON.stringify('file:' + probeDir)});
+  const saveAs = ${JSON.stringify(saveAs)};
+  const status = {};
+  try {
+    await ps.core.executeAsModal(async () => {
+      const doc = await ps.app.open(await lfs.getEntryWithUrl(${JSON.stringify('file:' + background)}));
+      try {
+        await main();
+        status.main = 'done';
+        for (const ext of ['psd', 'png', 'jpg']) {
+          try {
+            const f = await folder.createFile('smoke.' + ext, { overwrite: true });
+            await ps.app.batchPlay([{ _obj: 'save', as: saveAs[ext], in: { _path: lfs.createSessionToken(f), _kind: 'local' }, documentID: doc.id, copy: true, lowerCase: true }], { modalBehavior: 'execute' });
+            status[ext] = 'ok';
+          } catch (e) { status[ext] = String(e && e.message || e); }
+        }
+      } finally {
+        await doc.closeWithoutSaving();   // only the document this harness opened
+      }
+    }, { commandName: 'Territory smoke test' });
+  } catch (e) { status.error = String(e && e.message || e); }
+  const out = await folder.createFile('smoke-status.json', { overwrite: true });
+  await out.write(JSON.stringify(status));
+})();
+`
+    writeFileSync(join(DIST, 'smoke.local-test.psjs'), smokeHarness.split('__ADDITIONAL_CONTENTS_PATH_0__').join(configPng))
     const code = (await bundle(harness, null, probe)).split('__ADDITIONAL_CONTENTS_PATH_0__').join(configPng)
     writeFileSync(join(DIST, 'node-probe.local-test.psjs'), code)
   }

@@ -66,8 +66,9 @@ function sandbox(script: string, opts: { image: Img; files?: Record<string, stri
     if (!(m in allowed)) throw new Error(`Module not found: ${m}`)
     return allowed[m]
   }
-  const ctx = vm.createContext({ require, console: { log() {}, error() {} }, TextDecoder, Promise, Date, JSON, Math, Uint8Array, Float32Array, Array, Object, Error, String, Number, Set, Map })
-  vm.runInContext(script, ctx, { filename: 'color-detection.psjs' })
+  const ctx = vm.createContext({ // no TextEncoder/TextDecoder: Photoshop's script runtime has none
+    require, console: { log() {}, error() {} }, Promise, Date, JSON, Math, Uint8Array, Float32Array, Array, Object, Error, String, Number, Set, Map })
+  vm.runInContext(`(async () => {\n${script}\n})()`, ctx, { filename: 'color-detection.psjs' }) // top-level await → async wrapper (Node vm has no TLA)
   const done = () => new Promise<any>((resolve) => {
     const tick = () => (written['plugin-temp:/color-decision.json'] ? resolve(JSON.parse(written['plugin-temp:/color-decision.json'])) : setTimeout(tick, 5))
     tick()

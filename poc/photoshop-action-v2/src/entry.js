@@ -32,7 +32,7 @@ function runtime() {
 function readConfig(fs) {
   if (!CONFIG_PATH.startsWith('__ADDITIONAL')) {
     const raw = fs.readFileSync(CONFIG_PATH, 'utf-8')
-    return { config: JSON.parse(typeof raw === 'string' ? raw : new TextDecoder().decode(raw)), source: 'additionalContents[0]' }
+    return { config: JSON.parse(typeof raw === 'string' ? raw : require('./payload.js').utf8Decode(new Uint8Array(raw))), source: 'additionalContents[0]' }
   }
   if (HAS_EMBEDDED) return { config: JSON.parse(EMBEDDED_CONFIG), source: 'embedded' }
   throw new Error('no configuration: pass the JSON as additionalContents[0] or build with an embedded config')

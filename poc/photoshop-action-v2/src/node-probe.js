@@ -18,7 +18,7 @@
 // Decode with: node poc/photoshop-action-v2/decode-carrier.mjs <processed image>
 
 const detect = require('../../../src/nodes/color-detection/detect.js')
-const { decodePixelPayload, encodePixelPayload, MAGIC } = require('./payload.js')
+const { decodePixelPayload, encodePixelPayload, MAGIC, utf8Encode, utf8Decode } = require('./payload.js')
 
 // Candidate placeholders — written as literals so a platform-side text
 // replacement changes them; compared against strings rebuilt from parts.
@@ -58,7 +58,7 @@ function kindOf(bytes) {
   return 'other'
 }
 
-function utf8(bytes) { return new TextDecoder('utf-8').decode(bytes) }
+const utf8 = utf8Decode // no TextDecoder in Photoshop's script runtime
 
 // PNG text chunks (tEXt, uncompressed iTXt) → { keyword: text }
 function pngTextChunks(b) {
@@ -88,7 +88,7 @@ function pngTextChunks(b) {
 function asBytes(x) {
   if (x instanceof Uint8Array) return x
   if (x instanceof ArrayBuffer) return new Uint8Array(x)
-  if (typeof x === 'string') return new TextEncoder().encode(x)
+  if (typeof x === 'string') return utf8Encode(x)
   return new Uint8Array(x)
 }
 

@@ -39,8 +39,9 @@ function runProbe(script: string, files: Record<string, Uint8Array | string>, op
   }
   const process = { version: 'uxp-9.4.1-0' }
   const allowed: any = { photoshop: ps, uxp, fs, process }
-  const ctx = vm.createContext({ require: (m: string) => { if (!(m in allowed)) throw new Error('Module not found: ' + m); return allowed[m] }, console: { log() {}, error() {} }, TextDecoder, TextEncoder, Promise, Date, JSON, Math, Uint8Array, ArrayBuffer, Float32Array, Array, Object, Error, String, Number, Set, Map })
-  vm.runInContext(script, ctx)
+  const ctx = vm.createContext({ // no TextEncoder/TextDecoder: Photoshop's script runtime has none
+    require: (m: string) => { if (!(m in allowed)) throw new Error('Module not found: ' + m); return allowed[m] }, console: { log() {}, error() {} }, Promise, Date, JSON, Math, Uint8Array, ArrayBuffer, Float32Array, Array, Object, Error, String, Number, Set, Map })
+  vm.runInContext(`(async () => {\n${script}\n})()`, ctx) // top-level await → async wrapper (Node vm has no TLA)
   const done = () => new Promise<any>((r) => { const t = () => (written['plugin-temp:/color-decision.json'] ? r(JSON.parse(written['plugin-temp:/color-decision.json'])) : setTimeout(t, 5)); t() })
   return { done, calls }
 }

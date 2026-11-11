@@ -50,13 +50,14 @@ async function main() {
     ['caption', [{ _obj: 'set', _target: [{ _ref: 'property', _property: 'fileInfo' }, { _ref: 'document', _enum: 'ordinal', _value: 'targetEnum' }], to: { _obj: 'fileInfo', caption: 'TCD1:' + text } }]],
     ['bar', [
       { _obj: 'make', _target: [{ _ref: 'layer' }], using: { _obj: 'layer', name: ('TCD smoke ' + text).slice(0, 250) } },
-      { _obj: 'set', _target: [{ _ref: 'channel', _property: 'selection' }], to: { _obj: 'rectangle', top: { _unit: 'pixelsUnit', _value: 0 }, left: { _unit: 'pixelsUnit', _value: 0 }, bottom: { _unit: 'pixelsUnit', _value: Math.max(20, Math.round(doc.height / 20)) }, right: { _unit: 'pixelsUnit', _value: doc.width } } },
+      { _obj: 'set', _target: [{ _ref: 'channel', _property: 'selection' }], to: { _obj: 'rectangle', top: { _unit: 'pixelsUnit', _value: 0 }, left: { _unit: 'pixelsUnit', _value: 0 }, bottom: { _unit: 'pixelsUnit', _value: Math.max(60, Math.round(doc.height / 50) * 5) }, right: { _unit: 'pixelsUnit', _value: doc.width } } },
       { _obj: 'fill', using: { _enum: 'fillContents', _value: 'color' }, color: { _obj: 'RGBColor', red: color[0], grain: color[1], blue: color[2] }, opacity: { _unit: 'percentUnit', _value: 100 }, mode: { _enum: 'blendMode', _value: 'normal' } },
       { _obj: 'set', _target: [{ _ref: 'channel', _property: 'selection' }], to: { _enum: 'ordinal', _value: 'none' } },
     ]],
   ]
   for (const [name, descs] of steps) { try { await ps.app.batchPlay(descs, {}) } catch (e) { r['err_' + name] = msg(e) } }
-  try { await doc.createTextLayer({ name: 'TCD smoke text', contents: `getPixels: ${r.getPixels}\rraw: ${r.raw}\rplaceholders: ${Object.keys(r.ph).join(', ') || 'none'}`, fontSize: Math.max(12, Math.round(doc.height / 50)), position: { x: 12, y: Math.max(20, Math.round(doc.height / 20)) + Math.round(doc.height / 40) } }) } catch (e) { r.err_text = msg(e) }
+  try { await doc.createTextLayer({ name: 'TCD smoke text', contents: `getPixels: ${r.getPixels}\rraw: ${r.raw}\rplaceholders: ${Object.keys(r.ph).join(', ') || 'none'}`, fontSize: Math.max(12, Math.round(doc.height / 50)), position: { x: 12, y: Math.max(12, Math.round(doc.height / 50)) + 6 } }) } catch (e) { r.err_text = msg(e) }
   try { fs.writeFileSync('plugin-temp:/smoke.json', JSON.stringify(r), 'utf8') } catch (e) {}
 }
-main()
+// top-level await: Photoshop drops pending async work once top-level code returns
+await main()
