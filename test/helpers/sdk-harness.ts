@@ -52,6 +52,12 @@ export interface SdkRunOptions {
   token?: string | null
   webName?: string
   workerName?: string
+  /** extra top-level worker args, as App Builder injects them (e.g. __ims_oauth_s2s) */
+  workerArgs?: Record<string, unknown>
+  /** configure the Hono app before the SDK routes are mounted (e.g. restrictCallers) */
+  beforeMount?: (app: Hono) => void
+  /** x-api-key sent by the simulated caller (default: run-workflow-service) */
+  apiKey?: string
 }
 
 export async function runThroughSdk(opts: SdkRunOptions) {
@@ -61,19 +67,20 @@ export async function runThroughSdk(opts: SdkRunOptions) {
     requiredInputNames: opts.requiredInputNames,
   })
   const app = new Hono()
+  opts.beforeMount?.(app)
   mountFfcpeNodeRoutes(app, {
     worker: { package: 'territory-ffcpe-nodes', name: opts.workerName ?? 'test-worker' },
     web: { package: 'territory-ffcpe-nodes', name: opts.webName ?? 'test-web' },
     jobStore,
     orchestrator: jobOrchestratorFromFn(async (payload) => {
-      await worker({ ...payload, LOG_LEVEL: 'error' })
+      await worker({ ...opts.workerArgs, ...payload, LOG_LEVEL: 'error' })
     }),
     authenticate: createImsInboundAuth({
       validateToken: async (token, clientId) =>
         token === TEST_TOKEN ? { valid: true, clientId, orgId: 'TEST_ORG@AdobeOrg' } : { valid: false, reason: 'invalid token' },
     }),
   })
-  const headers: Record<string, string> = { 'Content-Type': 'application/json', 'x-api-key': TEST_API_KEY }
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', 'x-api-key': opts.apiKey ?? TEST_API_KEY }
   const token = opts.token === undefined ? TEST_TOKEN : opts.token
   if (token) headers.Authorization = `Bearer ${token}`
 

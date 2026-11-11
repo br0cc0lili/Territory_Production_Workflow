@@ -1,0 +1,34 @@
+{
+  "_comment": "Mock FFCPE submit body for Image Extension — stands in for the upstream Data Merge / Subject Placement steps until they exist. Source 300 x 200 px (served by the test's mock fetch). Targets: one already covered, two that share one master generation (bottom 60 px; top + bottom 20 px with the sides cropped), one over the 50 % automatic limit.",
+  "inputs": [
+    {
+      "port": "source",
+      "type": "image",
+      "name": "source_300x200.png",
+      "mimeType": "image/png",
+      "url": "https://assets.test.invalid/source_300x200.png"
+    },
+    {
+      "port": "layout",
+      "type": "json",
+      "name": "layout.json",
+      "mimeType": "application/json",
+      "json": {
+        "targets": [
+          { "id": "landscape_300x200", "canvas": { "width": 300, "height": 200 }, "placement": { "x": 0, "y": 0, "width": 300, "height": 200 } },
+          { "id": "square_300x260", "canvas": { "width": 300, "height": 260 }, "placement": { "x": 0, "y": 0, "width": 300, "height": 200 } },
+          { "id": "tall_240x240", "canvas": { "width": 240, "height": 240 }, "placement": { "x": -30, "y": 20, "width": 300, "height": 200 } },
+          { "id": "poster_300x400", "canvas": { "width": 300, "height": 400 }, "placement": { "x": 0, "y": 0, "width": 300, "height": 200 } }
+        ]
+      }
+    },
+    {
+      "port": "prompt",
+      "type": "text",
+      "name": "prompt.txt",
+      "mimeType": "text/plain",
+      "text": "continue the wet asphalt and the evening sky"
+    }
+  ],
+  "parameters": {}
+}

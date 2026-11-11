@@ -1,0 +1,80 @@
+{
+  "id": "marderabwehr/black-white-print",
+  "source": "Audi_Colour_Library_print.ase",
+  "textLayout": {
+    "coordinateSpace": {
+      "unit": "pt",
+      "pageBounds": [
+        0,
+        0,
+        1080,
+        1080
+      ]
+    },
+    "roles": [
+      {
+        "role": "headline",
+        "fontSizePt": 87,
+        "lines": [
+          [
+            80,
+            60,
+            170,
+            700
+          ],
+          [
+            175,
+            60,
+            265,
+            560
+          ]
+        ]
+      },
+      {
+        "role": "subline",
+        "fontSizePt": 37,
+        "lines": [
+          [
+            900,
+            60,
+            945,
+            620
+          ]
+        ]
+      }
+    ]
+  },
+  "palette": {
+    "swatches": [
+      {
+        "id": "Audi_Colour_Library_print/Audi Black CMYK",
+        "name": "Audi Black CMYK",
+        "model": "CMYK",
+        "values": [
+          0.4000000059604645,
+          0,
+          0,
+          1
+        ],
+        "type": "global"
+      },
+      {
+        "id": "Audi_Colour_Library_print/White CMYK",
+        "name": "White CMYK",
+        "model": "CMYK",
+        "values": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "type": "global"
+      }
+    ],
+    "selectedIds": [
+      "Audi_Colour_Library_print/Audi Black CMYK",
+      "Audi_Colour_Library_print/White CMYK"
+    ]
+  },
+  "options": {}
+}
